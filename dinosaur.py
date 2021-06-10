@@ -1,5 +1,3 @@
-import pygame
-
 class Dinosaur:
     X_POS = 80
     JUMP_VEL = 8.25
