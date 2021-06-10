@@ -147,7 +147,7 @@ def menu(generation_size, generation, run_AI, death_count):
                 print("Generation: %d\tPoints: %d" % (generation, points))
             points = 0
             
-            kb.type('Starting AI\n')
+            kb.press('a')
             SCREEN.blit(RUNNING[0], (SCREEN_WIDTH // 2 - 20, SCREEN_HEIGHT // 2 - 140))
             pygame.display.update()
             for event in pygame.event.get():
@@ -178,11 +178,6 @@ def menu(generation_size, generation, run_AI, death_count):
                 if event.type == pygame.KEYDOWN:
                     main(generation_size, run_AI, generation)
 
-def start(generation_size=10):
-    run_AI = False
-    while(True):
-        if int(input("Run AI: 0 -- Play: 1 -- :: ")) == 0:
-            run_AI = True
-            break
-    print()
-    menu(generation_size, 0, run_AI, death_count=0)
+def start(generation_size=10, run_AI=False):
+    if run_AI: print('\nRunning AI')
+    menu(generation_size, 0, run_AI, 0)
