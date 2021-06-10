@@ -37,16 +37,18 @@ BIRD = [pygame.image.load(os.path.join("Assets/Bird", "Bird1.png")),
 
 BG = pygame.image.load(os.path.join("Assets/Other", "Track.png"))
 
-def main(generation_size, run_AI, generation):
+def main(ai, generation_size, run_AI, generation):
     global game_speed, x_pos_bg, y_pos_bg, points, obstacles
     run = True
     clock = pygame.time.Clock()
+    
     players = []
-    if (run_AI):
+    if run_AI and ai=='genetic':
         for i in range(generation_size):
             players.append(Dinosaur(Y_POS, DUCKING, RUNNING, JUMPING))
     else:
         players.append(Dinosaur(Y_POS, DUCKING, RUNNING, JUMPING))
+        
     game_speed = 20
     x_pos_bg = 0
     y_pos_bg = Y_POS+70
@@ -67,6 +69,11 @@ def main(generation_size, run_AI, generation):
         SCREEN.blit(text, textRect)
         if int(points) > max_score:
             max_score = int(points)
+        
+        text = font.render("HI   " + str(max_score).zfill(5), True, (0, 0, 0))
+        textRect = text.get_rect()
+        textRect.center = (SCREEN_WIDTH-225, 35)
+        SCREEN.blit(text, textRect)
 
     def background():
         global x_pos_bg, y_pos_bg
@@ -89,11 +96,6 @@ def main(generation_size, run_AI, generation):
         textRect.center = (600, SCREEN_HEIGHT-30)
         SCREEN.blit(text, textRect)
         
-        text = font.render("HI   " + str(max_score).zfill(5), True, (0, 0, 0))
-        textRect = text.get_rect()
-        textRect.center = (SCREEN_WIDTH-225, 35)
-        SCREEN.blit(text, textRect)
-        
     while run:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -103,7 +105,10 @@ def main(generation_size, run_AI, generation):
         
         for player in players:
             if run_AI:
-                userInput = random.randint(0,2)
+                if ai=='genetic':
+                    userInput = random.randint(0,2)
+                elif ai=='nn':
+                    userInput = random.randint(0,2)                    
             else:
                 userInput = pygame.key.get_pressed()
                 if userInput[pygame.K_UP]:
@@ -116,12 +121,12 @@ def main(generation_size, run_AI, generation):
             player.update(userInput)
 
         if len(obstacles) == 0:
-            if random.randint(0, 2) == 0:
+            if random.randint(0, 1) == 0:
                 obstacles.append(SmallCactus(SMALL_CACTUS, SCREEN_WIDTH, Y_POS, game_speed, obstacles))
-            elif random.randint(0, 2) == 1:
+            elif random.randint(0, 1) == 1:
                 obstacles.append(LargeCactus(LARGE_CACTUS, SCREEN_WIDTH, Y_POS, game_speed, obstacles))
-            elif random.randint(0, 2) == 2:
-                obstacles.append(Bird(BIRD, SCREEN_WIDTH, Y_POS, game_speed, obstacles))
+            # elif random.randint(0, 2) == 2:
+            #     obstacles.append(Bird(BIRD, SCREEN_WIDTH, Y_POS, game_speed, obstacles))
 
         for obstacle in obstacles:
             obstacle.draw(SCREEN)
@@ -132,25 +137,26 @@ def main(generation_size, run_AI, generation):
                         if len(players)==0:
                             pygame.time.delay(250)
                             death_count += 1
-                            menu(generation_size, generation+1, run_AI, death_count)
+                            menu(ai, generation_size, generation+1, run_AI, death_count)
 
         background()
         score()
-        if run_AI: data(generation+1)
+        if run_AI and ai=='genetic': data(generation+1)
         
         clock.tick(40)
         pygame.display.update()
 
-def menu(generation_size, generation, run_AI, death_count):
+def menu(ai, generation_size, generation, run_AI, death_count):
     global points
     run = True
     while run:
         if run_AI:
             SCREEN.fill((255, 255, 255))
             
-            if points!=0:
-                print("Generation: %d\tPoints: %d" % (generation, points))
-            points = 0
+            if ai=='genetic':
+                if points!=0:
+                    print("Generation: %d\tPoints: %d" % (generation, points))
+                points = 0
             
             kb.press('a')
             SCREEN.blit(RUNNING[0], (SCREEN_WIDTH // 2 - 20, SCREEN_HEIGHT // 2 - 140))
@@ -159,7 +165,7 @@ def menu(generation_size, generation, run_AI, death_count):
                     if event.type == pygame.QUIT:
                         run = False
                     if event.type != pygame.QUIT:
-                        main(generation_size, run_AI, generation)
+                        main(ai, generation_size, run_AI, generation)
         else:
             SCREEN.fill((255, 255, 255))
             font = pygame.font.Font('freesansbold.ttf', 30)
@@ -181,8 +187,8 @@ def menu(generation_size, generation, run_AI, death_count):
                 if event.type == pygame.QUIT:
                     run = False
                 if event.type == pygame.KEYDOWN:
-                    main(generation_size, run_AI, generation)
+                    main(ai, generation_size, run_AI, generation)
 
-def start(generation_size=10, run_AI=False):
+def start(generation_size=0, run_AI=False, ai='nn'):
     if run_AI: print('\nRunning AI')
-    menu(generation_size, 0, run_AI, 0)
+    menu(ai, generation_size, 0, run_AI, 0)
