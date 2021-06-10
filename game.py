@@ -6,7 +6,7 @@ from dinosaur import Dinosaur
 from obstacle import SmallCactus, LargeCactus, Bird
 pygame.init()
 
-SCREEN_HEIGHT = 550
+SCREEN_HEIGHT = 525
 SCREEN_WIDTH = 1200
 SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 Y_POS = SCREEN_HEIGHT-200
@@ -61,9 +61,9 @@ def main(generation_size, run_AI, generation):
         if int(points) % 50 == 0:
             game_speed += 1
 
-        text = font.render("Score: " + str(int(points)), True, (0, 0, 0))
+        text = font.render(str(int(points)).zfill(5), True, (0, 0, 0))
         textRect = text.get_rect()
-        textRect.center = (150, SCREEN_HEIGHT-50)
+        textRect.center = (SCREEN_WIDTH-75, 35)
         SCREEN.blit(text, textRect)
         if int(points) > max_score:
             max_score = int(points)
@@ -79,14 +79,19 @@ def main(generation_size, run_AI, generation):
         x_pos_bg -= game_speed
         
     def data(generation):
-        text = font.render("Generation " + str(generation) + " ---- players left: " + str(len(players)), True, (0, 0, 0))
+        text = font.render("Gen " + str(generation), True, (0, 0, 0))
         textRect = text.get_rect()
-        textRect.center = (600, SCREEN_HEIGHT-50)
+        textRect.center = (600, SCREEN_HEIGHT-70)
         SCREEN.blit(text, textRect)
         
-        text = font.render("High Score: " + str(max_score), True, (0, 0, 0))
+        text = font.render(str(len(players)) + ' players left', True, (0, 0, 0))
         textRect = text.get_rect()
-        textRect.center = (150, 35)
+        textRect.center = (600, SCREEN_HEIGHT-30)
+        SCREEN.blit(text, textRect)
+        
+        text = font.render("HI   " + str(max_score).zfill(5), True, (0, 0, 0))
+        textRect = text.get_rect()
+        textRect.center = (SCREEN_WIDTH-225, 35)
         SCREEN.blit(text, textRect)
         
     while run:
