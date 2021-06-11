@@ -1,9 +1,11 @@
 import pygame
 import os
 import random
-from pynput.keyboard import Key, Controller
+from pynput.keyboard import Controller
 from dinosaur import Dinosaur
 from obstacle import SmallCactus, LargeCactus, Bird
+from neuralNetwork import NeuralNetwork
+
 pygame.init()
 
 SCREEN_HEIGHT = 525
@@ -96,6 +98,12 @@ def main(ai, generation_size, run_AI, generation):
         textRect.center = (600, SCREEN_HEIGHT-30)
         SCREEN.blit(text, textRect)
         
+    def getDist():
+        return obstacles[0].getX()-180
+        
+    def getHeight():
+        return y_pos_bg-obstacles[0].getY()
+    
     while run:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -108,7 +116,10 @@ def main(ai, generation_size, run_AI, generation):
                 if ai=='genetic':
                     userInput = random.randint(0,2)
                 elif ai=='nn':
-                    userInput = random.randint(0,2)                    
+                    if len(obstacles)!=0:
+                        userInput = nn.predict([getDist(), game_speed, getHeight()])
+                    else:
+                        userInput = 2              
             else:
                 userInput = pygame.key.get_pressed()
                 if userInput[pygame.K_UP]:
@@ -117,6 +128,7 @@ def main(ai, generation_size, run_AI, generation):
                     userInput = 1
                 else:
                     userInput = 2
+                    
             player.draw(SCREEN)
             player.update(userInput)
 
@@ -191,4 +203,7 @@ def menu(ai, generation_size, generation, run_AI, death_count):
 
 def start(generation_size=0, run_AI=False, ai='nn'):
     if run_AI: print('\nRunning AI')
+    if ai=='nn':
+        global nn
+        nn = NeuralNetwork(dimensions=[3,8,3], learningRate=1e-4)
     menu(ai, generation_size, 0, run_AI, 0)
