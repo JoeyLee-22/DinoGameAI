@@ -1,3 +1,3 @@
 from game import start
 
-start(generation_size=20, run_AI=True)
+start(run_AI=True, ai='nn')
