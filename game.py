@@ -1,6 +1,7 @@
 import pygame
 import os
 import random
+import numpy as np
 from pynput.keyboard import Controller
 from dinosaur import Dinosaur
 from obstacle import SmallCactus, LargeCactus, Bird
@@ -20,6 +21,9 @@ points = 0
 max_score = 0
 obstacles = []
 kb = Controller()
+
+training_inputs = []
+training_outputs = []
 
 RUNNING = [pygame.image.load(os.path.join("Assets/Dino", "DinoRun1.png")),
            pygame.image.load(os.path.join("Assets/Dino", "DinoRun2.png"))]
@@ -93,16 +97,23 @@ def main(ai, generation_size, run_AI, generation):
         textRect.center = (600, SCREEN_HEIGHT-70)
         SCREEN.blit(text, textRect)
         
-        text = font.render(str(len(players)) + ' players left', True, (0, 0, 0))
-        textRect = text.get_rect()
-        textRect.center = (600, SCREEN_HEIGHT-30)
-        SCREEN.blit(text, textRect)
+        if ai=='genetic':
+            text = font.render(str(len(players)) + ' players left', True, (0, 0, 0))
+            textRect = text.get_rect()
+            textRect.center = (600, SCREEN_HEIGHT-30)
+            SCREEN.blit(text, textRect)
         
     def getDist():
-        return obstacles[0].getX()-180
+        return (obstacles[0].getX()-180)/SCREEN_WIDTH
         
     def getHeight():
-        return y_pos_bg-obstacles[0].getY()
+        return (y_pos_bg-obstacles[0].getY())/80
+    
+    def check_state(state):
+        for input in training_inputs:
+            if np.array_equal(state, input):
+                return True
+        return False
     
     while run:
         for event in pygame.event.get():
@@ -114,23 +125,29 @@ def main(ai, generation_size, run_AI, generation):
         for player in players:
             if run_AI:
                 if ai=='genetic':
-                    userInput = random.randint(0,2)
+                    userInput = 0
                 elif ai=='nn':
+                    global jump
+                    jump=False
                     if len(obstacles)!=0:
-                        userInput = nn.predict([getDist(), game_speed, getHeight()])
+                        global state
+                        state = np.array([getDist(), game_speed/100, getHeight()])
+                        userInput = nn.predict(state)
+                        if userInput==0:
+                            jump=True
                     else:
-                        userInput = 2              
+                        userInput = 1
             else:
                 userInput = pygame.key.get_pressed()
                 if userInput[pygame.K_UP]:
                     userInput = 0
                 elif userInput[pygame.K_DOWN]:
-                    userInput = 1
-                else:
                     userInput = 2
-                    
-            player.draw(SCREEN)
-            player.update(userInput)
+                else:
+                    userInput = 1
+                
+        player.draw(SCREEN)
+        player.update(userInput)
 
         if len(obstacles) == 0:
             if random.randint(0, 1) == 0:
@@ -145,6 +162,15 @@ def main(ai, generation_size, run_AI, generation):
             obstacle.update()
             for player in players:
                 if player.dino_rect.colliderect(obstacle.rect):
+                        if ai=='nn':
+                            if not check_state(state):
+                                training_inputs.append(state)
+                                if jump:
+                                    training_outputs.append(np.array([0,1]))
+                                else:
+                                    training_outputs.append(np.array([1,0]))
+                            nn.train(training_inputs, training_outputs, epochs=1000)
+                        
                         players.remove(player)
                         if len(players)==0:
                             pygame.time.delay(250)
@@ -153,7 +179,7 @@ def main(ai, generation_size, run_AI, generation):
 
         background()
         score()
-        if run_AI and ai=='genetic': data(generation+1)
+        if run_AI: data(generation+1)
         
         clock.tick(40)
         pygame.display.update()
@@ -205,5 +231,5 @@ def start(generation_size=0, run_AI=False, ai='nn'):
     if run_AI: print('\nRunning AI')
     if ai=='nn':
         global nn
-        nn = NeuralNetwork(dimensions=[3,8,3], learningRate=1e-4)
+        nn = NeuralNetwork(dimensions=[3,8,2], learningRate=0.01)
     menu(ai, generation_size, 0, run_AI, 0)
