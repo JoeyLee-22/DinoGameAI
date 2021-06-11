@@ -79,8 +79,8 @@ class NeuralNetwork():
                 
             self.change()
         
-        avg_err = err_sum / (epochs*len(outputs)+1)
-        accuracy = str(int((correct/(epochs*len(outputs)+1))*100)) + '%'  
+        avg_err = err_sum / (epochs*len(outputs))
+        accuracy = str(int((correct/(epochs*len(outputs)))*100)) + '%'  
         print ("Accuracy: " + accuracy + " - Loss: " + str(round(avg_err, 10)))
 
     def predict(self, inputs):
