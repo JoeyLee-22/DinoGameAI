@@ -40,12 +40,12 @@ class Dinosaur:
             self.dino_run = False
             self.dino_jump = True
         elif userInput==1 and not self.dino_jump:
-            self.dino_duck = True
-            self.dino_run = False
-            self.dino_jump = False
-        elif userInput==2 and not self.dino_jump:
             self.dino_duck = False
             self.dino_run = True
+            self.dino_jump = False
+        elif userInput==2 and not self.dino_jump:
+            self.dino_duck = True
+            self.dino_run = False
             self.dino_jump = False
 
     def duck(self):
