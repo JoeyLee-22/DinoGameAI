@@ -1,6 +1,6 @@
 class Dinosaur:
     X_POS = 80
-    JUMP_VEL = 8.25
+    JUMP_VEL = 7.25
 
     def __init__(self, Y_POS, DUCKING, RUNNING, JUMPING):
         self.duck_img = DUCKING
