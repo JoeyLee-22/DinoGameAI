@@ -13,6 +13,12 @@ class Obstacle:
         self.rect.x -= self.game_speed
         if self.rect.x < -self.rect.width:
             self.obstacles.pop()
+    
+    def getX(self):
+        return self.rect.x
+    
+    def getY(self):
+        return self.rect.y
 
     def draw(self, SCREEN):
         SCREEN.blit(self.image[self.type], self.rect)
@@ -21,7 +27,7 @@ class SmallCactus(Obstacle):
     def __init__(self, image, SCREEN_WIDTH, Y_POS, game_speed, obstacles):
         self.type = random.randint(0, 2)
         super().__init__(image, self.type, SCREEN_WIDTH, game_speed, obstacles)
-        self.rect.y = Y_POS+15
+        self.rect.y = Y_POS+15     
 
 class LargeCactus(Obstacle):
     def __init__(self, image, SCREEN_WIDTH, Y_POS, game_speed, obstacles):
