@@ -73,3 +73,6 @@ class Dinosaur:
 
     def draw(self, SCREEN):
         SCREEN.blit(self.image, (self.dino_rect.x, self.dino_rect.y))
+        
+    def getY(self):
+        return self.dino_rect.y
