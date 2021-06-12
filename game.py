@@ -22,6 +22,7 @@ max_score = 0
 obstacles = []
 kb = Controller()
 
+state = np.zeros(3)
 training_inputs = []
 training_outputs = []
 
@@ -107,7 +108,7 @@ def main(ai, generation_size, run_AI, generation):
         return (obstacles[0].getX()-180)/SCREEN_WIDTH
         
     def getHeight():
-        return (y_pos_bg-obstacles[0].getY())/80
+        return (y_pos_bg-obstacles[0].getY())/200
     
     def check_state(state):
         for input in training_inputs:
@@ -125,16 +126,14 @@ def main(ai, generation_size, run_AI, generation):
         for player in players:
             if run_AI:
                 if ai=='genetic':
-                    userInput = 0
+                    pass
                 elif ai=='nn':
-                    global jump
-                    jump=False
-                    if len(obstacles)!=0:
+                    if len(obstacles)!=0 and player.getY() == Y_POS:
                         global state
+                        prev = state
                         state = np.array([getDist(), game_speed/100, getHeight()])
                         userInput = nn.predict(state)
-                        if userInput==0:
-                            jump=True
+                        print(userInput, end='\r')
                     else:
                         userInput = 1
             else:
@@ -149,10 +148,17 @@ def main(ai, generation_size, run_AI, generation):
         player.draw(SCREEN)
         player.update(userInput)
 
+        if len(obstacles)!=0:
+            if player.getY() < Y_POS:
+                prev_jump_state = prev
+            else:
+                prev_run_state = prev
+
         if len(obstacles) == 0:
-            if random.randint(0, 1) == 0:
+            num = random.randint(0,1)
+            if num == 0:
                 obstacles.append(SmallCactus(SMALL_CACTUS, SCREEN_WIDTH, Y_POS, game_speed, obstacles))
-            elif random.randint(0, 1) == 1:
+            elif num == 1:
                 obstacles.append(LargeCactus(LARGE_CACTUS, SCREEN_WIDTH, Y_POS, game_speed, obstacles))
             # elif random.randint(0, 2) == 2:
             #     obstacles.append(Bird(BIRD, SCREEN_WIDTH, Y_POS, game_speed, obstacles))
@@ -163,12 +169,12 @@ def main(ai, generation_size, run_AI, generation):
             for player in players:
                 if player.dino_rect.colliderect(obstacle.rect):
                         if ai=='nn':
-                            if not check_state(state):
-                                training_inputs.append(state)
-                                if jump:
-                                    training_outputs.append(np.array([0,1]))
-                                else:
-                                    training_outputs.append(np.array([1,0]))
+                            if player.getY() < Y_POS and not check_state(prev_jump_state):
+                                training_inputs.append(prev_jump_state)
+                                training_outputs.append(np.array([0,1]))
+                            elif not check_state(prev_run_state):
+                                training_inputs.append(prev_run_state)
+                                training_outputs.append(np.array([1,0]))
                             nn.train(training_inputs, training_outputs, epochs=1000)
                         
                         players.remove(player)
@@ -231,5 +237,5 @@ def start(generation_size=0, run_AI=False, ai='nn'):
     if run_AI: print('\nRunning AI')
     if ai=='nn':
         global nn
-        nn = NeuralNetwork(dimensions=[3,8,2], learningRate=0.01)
+        nn = NeuralNetwork(dimensions=[3,6,2], learningRate=1e-2)
     menu(ai, generation_size, 0, run_AI, 0)
