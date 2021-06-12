@@ -133,7 +133,6 @@ def main(ai, generation_size, run_AI, generation):
                         prev = state
                         state = np.array([getDist(), game_speed/100, getHeight()])
                         userInput = nn.predict(state)
-                        print(userInput, end='\r')
                     else:
                         userInput = 1
             else:
