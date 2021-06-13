@@ -113,18 +113,15 @@ def main(ai, generation_size, run_AI, generation):
 
         SCREEN.fill((255, 255, 255))
         
-        for player in players:
+        for player, nn in zip(players, NN):
             if run_AI:
-                if ai=='genetic':
-                    pass
-                elif ai=='nn':
-                    if len(obstacles)!=0 and player.getY() == Y_POS:
-                        global state
-                        prev = state
-                        state = np.array([nn.getDist(obstacles, SCREEN_WIDTH), game_speed/100, nn.getHeight(y_pos_bg, obstacles)])
-                        userInput = nn.predict(state)
-                    else:
-                        userInput = 1
+                if len(obstacles)!=0 and player.getY() == Y_POS:
+                    global state
+                    prev = state
+                    state = np.array([nn.getDist(obstacles, SCREEN_WIDTH), game_speed/100, nn.getHeight(y_pos_bg, obstacles)])
+                    userInput = nn.predict(state)
+                else:
+                    userInput = 1
             else:
                 userInput = pygame.key.get_pressed()
                 if userInput[pygame.K_UP]:
@@ -133,12 +130,12 @@ def main(ai, generation_size, run_AI, generation):
                     userInput = 2
                 else:
                     userInput = 1
-                
-        player.draw(SCREEN)
-        player.update(userInput)
+            
+            player.draw(SCREEN)
+            player.update(userInput)
 
         if len(obstacles) == 0:
-            if ai=='nn': 
+            if run_AI:
                 num = random.randint(0,1)
             else:
                 num = random.randint(0,2)
@@ -161,13 +158,15 @@ def main(ai, generation_size, run_AI, generation):
             for player in players:
                 if player.dino_rect.colliderect(obstacle.rect):
                     if ai=='nn':
-                        if player.getY() < Y_POS and not nn.check_state(prev_jump_state, training_inputs):
+                        if player.getY() < Y_POS and not NN[0].check_state(prev_jump_state, training_inputs):
                             training_inputs.append(prev_jump_state)
                             training_outputs.append(np.array([0,1]))
-                        elif not nn.check_state(prev_run_state, training_inputs):
+                        elif not NN[0].check_state(prev_run_state, training_inputs):
                             training_inputs.append(prev_run_state)
                             training_outputs.append(np.array([1,0]))
-                        nn.train(training_inputs, training_outputs, epochs=1000)
+                        NN[0].train(training_inputs, training_outputs, epochs=1000)
+                    if ai=='genetic':
+                        pass
                     
                     players.remove(player)
                     if len(players)==0:
@@ -187,14 +186,8 @@ def menu(ai, generation_size, generation, run_AI, death_count):
     global points
     run = True
     while run:
-        if run_AI:
-            SCREEN.fill((255, 255, 255))
-            
-            if ai=='genetic':
-                if points!=0:
-                    print("Generation: %d\tPoints: %d" % (generation, points))
-                points = 0
-            
+        SCREEN.fill((255, 255, 255))
+        if run_AI:            
             kb.press('a')
             SCREEN.blit(RUNNING[0], (SCREEN_WIDTH // 2 - 20, SCREEN_HEIGHT // 2 - 140))
             pygame.display.update()
@@ -204,7 +197,6 @@ def menu(ai, generation_size, generation, run_AI, death_count):
                     if event.type != pygame.QUIT:
                         main(ai, generation_size, run_AI, generation)
         else:
-            SCREEN.fill((255, 255, 255))
             font = pygame.font.Font('freesansbold.ttf', 30)
 
             if death_count == 0:
@@ -226,11 +218,14 @@ def menu(ai, generation_size, generation, run_AI, death_count):
                 if event.type == pygame.KEYDOWN:
                     main(ai, generation_size, run_AI, generation)
 
-def start(generation_size=0, run_AI=False, ai=''):
-    if run_AI: print('\nRunning AI')
+def start(generation_size=20, run_AI=False, ai=''):
+    if run_AI: 
+        print('\nRunning AI')
+        global NN
+        NN = []
     if ai=='nn':
-        global nn
-        nn = NeuralNetwork(dimensions=[3,12,2], learningRate=1e-2)
+        NN.append(NeuralNetwork(dimensions=[3,12,2], learningRate=1e-2))
     elif ai=='genetic':
-        pass
+        for _ in range(generation_size):
+            NN.append(NeuralNetwork(dimensions=[3,12,2]))
     menu(ai, generation_size, 0, run_AI, 0)
