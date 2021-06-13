@@ -69,7 +69,7 @@ def main(ai, generation_size, run_AI, generation):
         points += 0.25
         if ai!='nn':
             if int(points) % 50 == 0:
-                game_speed += 0
+                game_speed += 1
 
         text = font.render(str(int(points)).zfill(5), True, (0, 0, 0))
         textRect = text.get_rect()
