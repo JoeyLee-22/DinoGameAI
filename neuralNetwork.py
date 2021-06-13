@@ -1,5 +1,5 @@
-import time
 import warnings
+import sklearn
 import numpy as np
 
 class NeuralNetwork():
@@ -65,22 +65,31 @@ class NeuralNetwork():
         err_sum = 0.0
         avg_err = 0.0
         correct = 0
-        for _ in range (epochs):
-            for m in range(len(outputs)):
-                correct_output = outputs[m]
-                self.forwardProp(inputs[m])
-                self.backProp(inputs[m], correct_output)
-                
-                if np.argmax(self.outputNeurons) == np.argmax(correct_output):
-                    correct+=1
-
-                error = np.amax(np.absolute(self.outputLayerErrors))
-                err_sum += error
-                
-            self.change()
+        size = len(inputs)
+        inputs, outputs = sklearn.utils.shuffle(inputs, outputs)
         
-        avg_err = err_sum / (epochs*len(outputs))
-        accuracy = str(int((correct/(epochs*len(outputs)))*100)) + '%'  
+        for i in range(3,0,-1):
+            if size%i==0:
+                bs=i
+                break
+        
+        for _ in range (epochs):
+            for j in range(int(size/bs)):
+                for m in range(bs):
+                    correct_output = outputs[j*bs+m]
+                    self.forwardProp(inputs[j*bs+m])
+                    self.backProp(inputs[j*bs+m], correct_output)
+                    
+                    if np.argmax(self.outputNeurons) == np.argmax(correct_output):
+                        correct+=1
+
+                    error = np.amax(np.absolute(self.outputLayerErrors))
+                    err_sum += error
+                    
+                self.change()
+        
+        avg_err = err_sum / (epochs*size)
+        accuracy = str(int((correct/(epochs*size))*100)) + '%'  
         print ("Accuracy: " + accuracy + " - Loss: " + str(round(avg_err, 10)))
 
     def predict(self, inputs):
