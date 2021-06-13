@@ -67,8 +67,9 @@ def main(ai, generation_size, run_AI, generation):
     def score():
         global points, game_speed, max_score
         points += 0.25
-        if int(points) % 50 == 0:
-            game_speed += 1
+        if ai!='nn':
+            if int(points) % 50 == 0:
+                game_speed += 0
 
         text = font.render(str(int(points)).zfill(5), True, (0, 0, 0))
         textRect = text.get_rect()
@@ -103,18 +104,6 @@ def main(ai, generation_size, run_AI, generation):
             textRect = text.get_rect()
             textRect.center = (600, SCREEN_HEIGHT-30)
             SCREEN.blit(text, textRect)
-        
-    def getDist():
-        return (obstacles[0].getX()-180)/SCREEN_WIDTH
-        
-    def getHeight():
-        return (y_pos_bg-obstacles[0].getY())/200
-    
-    def check_state(state):
-        for input in training_inputs:
-            if np.array_equal(state, input):
-                return True
-        return False
     
     counter = 0
     while run:
@@ -132,7 +121,7 @@ def main(ai, generation_size, run_AI, generation):
                     if len(obstacles)!=0 and player.getY() == Y_POS:
                         global state
                         prev = state
-                        state = np.array([getDist(), game_speed/100, getHeight()])
+                        state = np.array([nn.getDist(obstacles, SCREEN_WIDTH), game_speed/100, nn.getHeight(y_pos_bg, obstacles)])
                         userInput = nn.predict(state)
                     else:
                         userInput = 1
@@ -148,44 +137,43 @@ def main(ai, generation_size, run_AI, generation):
         player.draw(SCREEN)
         player.update(userInput)
 
-        if counter%2==0:
-            if len(obstacles)!=0:
-                if player.getY() < Y_POS:
-                    prev_jump_state = prev
-                else:
-                    prev_run_state = prev
-
         if len(obstacles) == 0:
             if ai=='nn': 
                 num = random.randint(0,1)
-            else: 
+            else:
                 num = random.randint(0,2)
+                
             if num == 0:
                 obstacles.append(SmallCactus(SMALL_CACTUS, SCREEN_WIDTH, Y_POS, game_speed, obstacles))
             elif num == 1:
                 obstacles.append(LargeCactus(LARGE_CACTUS, SCREEN_WIDTH, Y_POS, game_speed, obstacles))
             elif num == 2:
                 obstacles.append(Bird(BIRD, SCREEN_WIDTH, Y_POS, game_speed, obstacles))
+        else:
+            if player.getY() < Y_POS:
+                prev_jump_state = prev
+            else:
+                prev_run_state = prev
 
         for obstacle in obstacles:
             obstacle.draw(SCREEN)
             obstacle.update()
             for player in players:
                 if player.dino_rect.colliderect(obstacle.rect):
-                        if ai=='nn' and counter%2==0:
-                            if player.getY() < Y_POS and not check_state(prev_jump_state):
-                                training_inputs.append(prev_jump_state)
-                                training_outputs.append(np.array([0,1]))
-                            elif not check_state(prev_run_state):
-                                training_inputs.append(prev_run_state)
-                                training_outputs.append(np.array([1,0]))
-                            nn.train(training_inputs, training_outputs, epochs=1000)
-                        
-                        players.remove(player)
-                        if len(players)==0:
-                            pygame.time.delay(250)
-                            death_count += 1
-                            menu(ai, generation_size, generation+1, run_AI, death_count)
+                    if ai=='nn':
+                        if player.getY() < Y_POS and not nn.check_state(prev_jump_state, training_inputs):
+                            training_inputs.append(prev_jump_state)
+                            training_outputs.append(np.array([0,1]))
+                        elif not nn.check_state(prev_run_state, training_inputs):
+                            training_inputs.append(prev_run_state)
+                            training_outputs.append(np.array([1,0]))
+                        nn.train(training_inputs, training_outputs, epochs=1000)
+                    
+                    players.remove(player)
+                    if len(players)==0:
+                        pygame.time.delay(250)
+                        death_count += 1
+                        menu(ai, generation_size, generation+1, run_AI, death_count)
 
         counter+=1
         background()
@@ -238,7 +226,7 @@ def menu(ai, generation_size, generation, run_AI, death_count):
                 if event.type == pygame.KEYDOWN:
                     main(ai, generation_size, run_AI, generation)
 
-def start(generation_size=0, run_AI=False, ai='nn'):
+def start(generation_size=0, run_AI=False, ai=''):
     if run_AI: print('\nRunning AI')
     if ai=='nn':
         global nn
