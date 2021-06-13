@@ -24,6 +24,18 @@ class NeuralNetwork():
         self.hiddenLayerErrors = np.empty(dimensions[1])
         self.outputLayerErrors = np.empty(dimensions[2])
 
+    def getDist(self, obstacles, SCREEN_WIDTH):
+        return (obstacles[0].getX()-180)/SCREEN_WIDTH
+        
+    def getHeight(self, y_pos_bg, obstacles):
+        return (y_pos_bg-obstacles[0].getY())/200
+    
+    def check_state(self, state, training_inputs):
+        for input in training_inputs:
+            if np.array_equal(state, input):
+                return True
+        return False
+
     def sigmoid(self, x):
         warnings.filterwarnings("ignore")
         return 1/(1+np.exp(-x))
