@@ -116,6 +116,7 @@ def main(ai, generation_size, run_AI, generation):
                 return True
         return False
     
+    counter = 0
     while run:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -147,27 +148,31 @@ def main(ai, generation_size, run_AI, generation):
         player.draw(SCREEN)
         player.update(userInput)
 
-        if len(obstacles)!=0:
-            if player.getY() < Y_POS:
-                prev_jump_state = prev
-            else:
-                prev_run_state = prev
+        if counter%2==0:
+            if len(obstacles)!=0:
+                if player.getY() < Y_POS:
+                    prev_jump_state = prev
+                else:
+                    prev_run_state = prev
 
         if len(obstacles) == 0:
-            num = random.randint(0,1)
+            if ai=='nn': 
+                num = random.randint(0,1)
+            else: 
+                num = random.randint(0,2)
             if num == 0:
                 obstacles.append(SmallCactus(SMALL_CACTUS, SCREEN_WIDTH, Y_POS, game_speed, obstacles))
             elif num == 1:
                 obstacles.append(LargeCactus(LARGE_CACTUS, SCREEN_WIDTH, Y_POS, game_speed, obstacles))
-            # elif random.randint(0, 2) == 2:
-            #     obstacles.append(Bird(BIRD, SCREEN_WIDTH, Y_POS, game_speed, obstacles))
+            elif num == 2:
+                obstacles.append(Bird(BIRD, SCREEN_WIDTH, Y_POS, game_speed, obstacles))
 
         for obstacle in obstacles:
             obstacle.draw(SCREEN)
             obstacle.update()
             for player in players:
                 if player.dino_rect.colliderect(obstacle.rect):
-                        if ai=='nn':
+                        if ai=='nn' and counter%2==0:
                             if player.getY() < Y_POS and not check_state(prev_jump_state):
                                 training_inputs.append(prev_jump_state)
                                 training_outputs.append(np.array([0,1]))
@@ -182,6 +187,7 @@ def main(ai, generation_size, run_AI, generation):
                             death_count += 1
                             menu(ai, generation_size, generation+1, run_AI, death_count)
 
+        counter+=1
         background()
         score()
         if run_AI: data(generation+1)
@@ -236,5 +242,7 @@ def start(generation_size=0, run_AI=False, ai='nn'):
     if run_AI: print('\nRunning AI')
     if ai=='nn':
         global nn
-        nn = NeuralNetwork(dimensions=[3,6,2], learningRate=1e-2)
+        nn = NeuralNetwork(dimensions=[3,12,2], learningRate=1e-2)
+    elif ai=='genetic':
+        pass
     menu(ai, generation_size, 0, run_AI, 0)
