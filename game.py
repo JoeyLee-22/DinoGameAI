@@ -19,6 +19,7 @@ x_pos_bg = 0
 y_pos_bg = Y_POS+70
 points = 0
 max_score = 0
+max_score_gen = 0
 obstacles = []
 kb = Controller()
 
@@ -45,13 +46,13 @@ BIRD = [pygame.image.load(os.path.join("Assets/Bird", "Bird1.png")),
 BG = pygame.image.load(os.path.join("Assets/Other", "Track.png"))
 
 def main(ai, generation_size, run_AI, generation):
-    global game_speed, x_pos_bg, y_pos_bg, points, obstacles
+    global game_speed, x_pos_bg, y_pos_bg, points, obstacles, max_score_gen
     run = True
     clock = pygame.time.Clock()
     
     players = []
     if run_AI and ai=='genetic':
-        for i in range(generation_size):
+        for _ in range(generation_size):
             players.append(Dinosaur(Y_POS, DUCKING, RUNNING, JUMPING))
     else:
         players.append(Dinosaur(Y_POS, DUCKING, RUNNING, JUMPING))
@@ -62,7 +63,6 @@ def main(ai, generation_size, run_AI, generation):
     points = 0
     font = pygame.font.Font('freesansbold.ttf', 30)
     obstacles = []
-    death_count = 0
 
     def score():
         global points, game_speed, max_score
@@ -105,14 +105,8 @@ def main(ai, generation_size, run_AI, generation):
             textRect.center = (600, SCREEN_HEIGHT-30)
             SCREEN.blit(text, textRect)
     
-    counter = 0
-    while run:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                run = False
-
-        SCREEN.fill((255, 255, 255))
-        
+    def getInput():
+        global state, prev
         for player, nn in zip(players, NN):
             if run_AI:
                 if len(obstacles)!=0 and player.getY() == Y_POS:
@@ -130,28 +124,12 @@ def main(ai, generation_size, run_AI, generation):
                     userInput = 2
                 else:
                     userInput = 1
-            
+
             player.draw(SCREEN)
             player.update(userInput)
-
-        if len(obstacles) == 0:
-            if run_AI:
-                num = random.randint(0,1)
-            else:
-                num = random.randint(0,2)
-                
-            if num == 0:
-                obstacles.append(SmallCactus(SMALL_CACTUS, SCREEN_WIDTH, Y_POS, game_speed, obstacles))
-            elif num == 1:
-                obstacles.append(LargeCactus(LARGE_CACTUS, SCREEN_WIDTH, Y_POS, game_speed, obstacles))
-            elif num == 2:
-                obstacles.append(Bird(BIRD, SCREEN_WIDTH, Y_POS, game_speed, obstacles))
-        else:
-            if player.getY() < Y_POS:
-                prev_jump_state = prev
-            else:
-                prev_run_state = prev
-
+    
+    def checkCollision():
+        global max_score_gen
         for obstacle in obstacles:
             obstacle.draw(SCREEN)
             obstacle.update()
@@ -164,17 +142,49 @@ def main(ai, generation_size, run_AI, generation):
                         elif not NN[0].check_state(prev_run_state, training_inputs):
                             training_inputs.append(prev_run_state)
                             training_outputs.append(np.array([1,0]))
-                        NN[0].train(training_inputs, training_outputs, epochs=1000)
+                        NN[0].train(training_inputs, training_outputs, epochs=2000)
                     if ai=='genetic':
                         pass
                     
+                    if player.getScore() > max_score_gen:
+                        max_score_gen = player.getScore()
+                    
+                    player.changeScore(0)
                     players.remove(player)
                     if len(players)==0:
                         pygame.time.delay(250)
-                        death_count += 1
-                        menu(ai, generation_size, generation+1, run_AI, death_count)
+                        menu(ai, generation_size, generation+1, run_AI, 1)
+    
+    def getObstacle():
+        global prev_jump_state, prev_run_state
+        if len(obstacles) == 0:
+            if run_AI:
+                num = random.randint(0,1)
+            else:
+                num = random.randint(0,2)
+                
+            if num == 0:
+                obstacles.append(SmallCactus(SMALL_CACTUS, SCREEN_WIDTH, Y_POS, game_speed, obstacles))
+            elif num == 1:
+                obstacles.append(LargeCactus(LARGE_CACTUS, SCREEN_WIDTH, Y_POS, game_speed, obstacles))
+            elif num == 2:
+                obstacles.append(Bird(BIRD, SCREEN_WIDTH, Y_POS, game_speed, obstacles))
+        elif run_AI:
+            if players[0].getY() < Y_POS:
+                prev_jump_state = prev
+            else:
+                prev_run_state = prev
+    
+    while run:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+        SCREEN.fill((255, 255, 255))
+        
+        getInput()
+        checkCollision()
+        getObstacle()
 
-        counter+=1
         background()
         score()
         if run_AI: data(generation+1)
@@ -219,13 +229,15 @@ def menu(ai, generation_size, generation, run_AI, death_count):
                     main(ai, generation_size, run_AI, generation)
 
 def start(generation_size=20, run_AI=False, ai=''):
-    if run_AI: 
+    global NN
+    NN = []
+    if run_AI:
         print('\nRunning AI')
-        global NN
-        NN = []
-    if ai=='nn':
-        NN.append(NeuralNetwork(dimensions=[3,12,2], learningRate=1e-2))
-    elif ai=='genetic':
-        for _ in range(generation_size):
-            NN.append(NeuralNetwork(dimensions=[3,12,2]))
+        if ai=='nn':
+            NN.append(NeuralNetwork(dimensions=[3,12,2], learningRate=1e-2))
+        elif ai=='genetic':
+            for _ in range(generation_size):
+                NN.append(NeuralNetwork(dimensions=[3,12,2]))
+    else:
+        NN.append(0)
     menu(ai, generation_size, 0, run_AI, 0)
