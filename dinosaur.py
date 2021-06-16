@@ -1,6 +1,7 @@
 class Dinosaur:
     X_POS = 80
     JUMP_VEL = 7.25
+    score = 0
 
     def __init__(self, Y_POS, DUCKING, RUNNING, JUMPING):
         self.duck_img = DUCKING
@@ -47,6 +48,8 @@ class Dinosaur:
             self.dino_duck = True
             self.dino_run = False
             self.dino_jump = False
+            
+        self.score += 0.25
 
     def duck(self):
         self.image = self.duck_img[self.step_index // 5]
@@ -76,3 +79,9 @@ class Dinosaur:
         
     def getY(self):
         return self.dino_rect.y
+    
+    def changeScore(self, num):
+        self.score = num
+    
+    def getScore(self):
+        return self.score
