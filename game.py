@@ -19,7 +19,6 @@ x_pos_bg = 0
 y_pos_bg = Y_POS+70
 points = 0
 max_score = 0
-max_score_gen = 0
 obstacles = []
 kb = Controller()
 
@@ -46,7 +45,7 @@ BIRD = [pygame.image.load(os.path.join("Assets/Bird", "Bird1.png")),
 BG = pygame.image.load(os.path.join("Assets/Other", "Track.png"))
 
 def main(ai, generation_size, run_AI, generation):
-    global game_speed, x_pos_bg, y_pos_bg, points, obstacles, max_score_gen
+    global game_speed, x_pos_bg, y_pos_bg, points, obstacles
     run = True
     clock = pygame.time.Clock()
     
@@ -129,11 +128,10 @@ def main(ai, generation_size, run_AI, generation):
             player.update(userInput)
     
     def checkCollision():
-        global max_score_gen
         for obstacle in obstacles:
             obstacle.draw(SCREEN)
             obstacle.update()
-            for player in players:
+            for i, player in enumerate(players):
                 if player.dino_rect.colliderect(obstacle.rect):
                     if ai=='nn':
                         if player.getY() < Y_POS and not NN[0].check_state(prev_jump_state, training_inputs):
@@ -145,13 +143,13 @@ def main(ai, generation_size, run_AI, generation):
                         NN[0].train(training_inputs, training_outputs, epochs=2000)
                     if ai=='genetic':
                         pass
-                    
-                    if player.getScore() > max_score_gen:
-                        max_score_gen = player.getScore()
-                    
-                    player.changeScore(0)
+
+                    scores[i] = player.getScore()
                     players.remove(player)
                     if len(players)==0:
+                        print()
+                        for num in scores:
+                            print(num)
                         pygame.time.delay(250)
                         menu(ai, generation_size, generation+1, run_AI, 1)
     
@@ -228,7 +226,7 @@ def menu(ai, generation_size, generation, run_AI, death_count):
                 if event.type == pygame.KEYDOWN:
                     main(ai, generation_size, run_AI, generation)
 
-def start(generation_size=20, run_AI=False, ai=''):
+def start(generation_size=2, run_AI=False, ai=''):
     global NN
     NN = []
     if run_AI:
@@ -236,6 +234,8 @@ def start(generation_size=20, run_AI=False, ai=''):
         if ai=='nn':
             NN.append(NeuralNetwork(dimensions=[3,12,2], learningRate=1e-2))
         elif ai=='genetic':
+            global scores
+            scores = np.empty(generation_size)
             for _ in range(generation_size):
                 NN.append(NeuralNetwork(dimensions=[3,12,2]))
     else:
