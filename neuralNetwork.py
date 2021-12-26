@@ -26,9 +26,9 @@ class NeuralNetwork():
 
     def getDist(self, obstacles, SCREEN_WIDTH):
         return (obstacles[0].getX()-180)/SCREEN_WIDTH
-        
+    
     def getHeight(self, y_pos_bg, obstacles):
-        return (y_pos_bg-obstacles[0].getY())/200
+        return int((y_pos_bg-obstacles[0].getY())/100>0.7)
     
     def check_state(self, state, training_inputs):
         for input in training_inputs:
