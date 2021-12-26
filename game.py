@@ -14,12 +14,8 @@ SCREEN_WIDTH = 1200
 SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 Y_POS = SCREEN_HEIGHT-200
 
-game_speed = 20
-x_pos_bg = 0
-y_pos_bg = Y_POS+70
-points = 0
 max_score = 0
-obstacles = []
+start_speed = 45
 kb = Controller()
 
 state = np.zeros(3)
@@ -56,7 +52,7 @@ def main(ai, generation_size, run_AI, generation):
     else:
         players.append(Dinosaur(Y_POS, DUCKING, RUNNING, JUMPING))
         
-    game_speed = 20
+    game_speed = start_speed
     x_pos_bg = 0
     y_pos_bg = Y_POS+70
     points = 0
@@ -65,10 +61,9 @@ def main(ai, generation_size, run_AI, generation):
 
     def score():
         global points, game_speed, max_score
-        points += 0.25
-        if ai!='nn':
-            if int(points) % 50 == 0:
-                game_speed += 1
+        points += 0.3
+        # if int(points) % 50 == 0:
+        #     game_speed += 0.5
 
         text = font.render(str(int(points)).zfill(5), True, (0, 0, 0))
         textRect = text.get_rect()
@@ -80,6 +75,11 @@ def main(ai, generation_size, run_AI, generation):
         text = font.render("HI   " + str(max_score).zfill(5), True, (0, 0, 0))
         textRect = text.get_rect()
         textRect.center = (SCREEN_WIDTH-225, 35)
+        SCREEN.blit(text, textRect)
+        
+        text = font.render("Game Speed: " + str(game_speed).zfill(5), True, (0, 0, 0))
+        textRect = text.get_rect()
+        textRect.center = (SCREEN_WIDTH-500, 35)
         SCREEN.blit(text, textRect)
 
     def background():
@@ -111,7 +111,7 @@ def main(ai, generation_size, run_AI, generation):
                 if len(obstacles)!=0 and player.getY() == Y_POS:
                     global state
                     prev = state
-                    state = np.array([nn.getDist(obstacles, SCREEN_WIDTH), game_speed/100, nn.getHeight(y_pos_bg, obstacles)])
+                    state = np.array([nn.getDist(obstacles, SCREEN_WIDTH), nn.getHeight(y_pos_bg, obstacles), round(game_speed/50, 1)])
                     userInput = nn.predict(state)
                 else:
                     userInput = 1
@@ -128,6 +128,7 @@ def main(ai, generation_size, run_AI, generation):
             player.update(userInput)
     
     def checkCollision():
+        global game_speed
         for obstacle in obstacles:
             obstacle.draw(SCREEN)
             obstacle.update()
@@ -140,16 +141,14 @@ def main(ai, generation_size, run_AI, generation):
                         elif not NN[0].check_state(prev_run_state, training_inputs):
                             training_inputs.append(prev_run_state)
                             training_outputs.append(np.array([1,0]))
-                        NN[0].train(training_inputs, training_outputs, epochs=2000)
+                        NN[0].train(training_inputs, training_outputs, epochs=3000)
+                        game_speed = start_speed
                     if ai=='genetic':
                         pass
 
                     scores[i] = player.getScore()
                     players.remove(player)
                     if len(players)==0:
-                        print()
-                        for num in scores:
-                            print(num)
                         pygame.time.delay(250)
                         menu(ai, generation_size, generation+1, run_AI, 1)
     
@@ -231,10 +230,11 @@ def start(generation_size=2, run_AI=False, ai=''):
     NN = []
     if run_AI:
         print('\nRunning AI')
+        global scores
         if ai=='nn':
-            NN.append(NeuralNetwork(dimensions=[3,12,2], learningRate=1e-2))
+            scores = np.empty(1)
+            NN.append(NeuralNetwork(dimensions=[3,10,2], learningRate=1e-2))
         elif ai=='genetic':
-            global scores
             scores = np.empty(generation_size)
             for _ in range(generation_size):
                 NN.append(NeuralNetwork(dimensions=[3,12,2]))
