@@ -1,5 +1,5 @@
 # Dino Game AI
-dino game implemented with pygame
+dino game implemented with pygame with increasing game speed
 
 ai is implemented with a neural network
 
