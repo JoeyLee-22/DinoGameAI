@@ -15,12 +15,13 @@ SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 Y_POS = SCREEN_HEIGHT-200
 
 max_score = 0
-start_speed = 45
+start_speed = 20
 kb = Controller()
 
-state = np.zeros(3)
+state = np.zeros(2)
 training_inputs = []
 training_outputs = []
+# [jump,run]
 
 RUNNING = [pygame.image.load(os.path.join("Assets/Dino", "DinoRun1.png")),
            pygame.image.load(os.path.join("Assets/Dino", "DinoRun2.png"))]
@@ -51,19 +52,21 @@ def main(ai, generation_size, run_AI, generation):
             players.append(Dinosaur(Y_POS, DUCKING, RUNNING, JUMPING))
     else:
         players.append(Dinosaur(Y_POS, DUCKING, RUNNING, JUMPING))
-        
-    game_speed = start_speed
+    
+    if max_score==0:
+        game_speed = start_speed
+    
     x_pos_bg = 0
     y_pos_bg = Y_POS+70
     points = 0
     font = pygame.font.Font('freesansbold.ttf', 30)
     obstacles = []
 
-    def score():
+    def score_and_speed():
         global points, game_speed, max_score
         points += 0.3
-        # if int(points) % 50 == 0:
-        #     game_speed += 0.5
+        if int(points) % 50 == 0 and int(points) != 0:
+            game_speed += .5
 
         text = font.render(str(int(points)).zfill(5), True, (0, 0, 0))
         textRect = text.get_rect()
@@ -109,10 +112,14 @@ def main(ai, generation_size, run_AI, generation):
         for player, nn in zip(players, NN):
             if run_AI:
                 if len(obstacles)!=0 and player.getY() == Y_POS:
-                    global state
                     prev = state
-                    state = np.array([nn.getDist(obstacles, SCREEN_WIDTH), nn.getHeight(y_pos_bg, obstacles), round(game_speed/50, 1)])
+                    dist = nn.getDist(obstacles, SCREEN_WIDTH)
+                    height = nn.getHeight(y_pos_bg, obstacles)
+                    state = np.array([dist, round(game_speed/70, 1)])
                     userInput = nn.predict(state)
+                    if (dist>prev[0] and not NN[0].check_state(prev, training_inputs)):
+                        training_inputs.append(prev)
+                        training_outputs.append(np.array([1,0]))
                 else:
                     userInput = 1
             else:
@@ -134,22 +141,33 @@ def main(ai, generation_size, run_AI, generation):
             obstacle.update()
             for i, player in enumerate(players):
                 if player.dino_rect.colliderect(obstacle.rect):
-                    if ai=='nn':
-                        if player.getY() < Y_POS and not NN[0].check_state(prev_jump_state, training_inputs):
-                            training_inputs.append(prev_jump_state)
-                            training_outputs.append(np.array([0,1]))
-                        elif not NN[0].check_state(prev_run_state, training_inputs):
-                            training_inputs.append(prev_run_state)
-                            training_outputs.append(np.array([1,0]))
-                        NN[0].train(training_inputs, training_outputs, epochs=3000)
+                    if ai=='nn' and run_AI:
+                        v = round(player.getV(),3)
+    
+                        if not NN[0].check_state(prev_run_state, training_inputs):
+                            if player.getV()<7.25 and player.getV()>0:
+                                training_inputs.append(prev_run_state)
+                                training_outputs.append(np.array([1,0]))
+                            elif player.getV()<0:
+                                training_inputs.append(state)
+                                training_outputs.append(np.array([0,1]))
+                            else:
+                                training_inputs.append(prev_run_state)
+                                training_outputs.append(np.array([1,0]))
+                                                    
+                        #die while going up: jump earlier
+                        #die while going down: jump later
+                        #die while running: jump earlier
+                        
+                        NN[0].train(training_inputs, training_outputs, epochs=1500)
                         game_speed = start_speed
-                    if ai=='genetic':
+                        scores[i] = player.getScore()
+                    if ai=='genetic' and run_AI:
                         pass
 
-                    scores[i] = player.getScore()
                     players.remove(player)
                     if len(players)==0:
-                        pygame.time.delay(250)
+                        pygame.time.delay(100)
                         menu(ai, generation_size, generation+1, run_AI, 1)
     
     def getObstacle():
@@ -183,7 +201,7 @@ def main(ai, generation_size, run_AI, generation):
         getObstacle()
 
         background()
-        score()
+        score_and_speed()
         if run_AI: data(generation+1)
         
         clock.tick(40)
@@ -194,7 +212,7 @@ def menu(ai, generation_size, generation, run_AI, death_count):
     run = True
     while run:
         SCREEN.fill((255, 255, 255))
-        if run_AI:            
+        if run_AI:
             kb.press('a')
             SCREEN.blit(RUNNING[0], (SCREEN_WIDTH // 2 - 20, SCREEN_HEIGHT // 2 - 140))
             pygame.display.update()
@@ -225,7 +243,7 @@ def menu(ai, generation_size, generation, run_AI, death_count):
                 if event.type == pygame.KEYDOWN:
                     main(ai, generation_size, run_AI, generation)
 
-def start(generation_size=2, run_AI=False, ai=''):
+def start(generation_size=2, run_AI=False, ai='', learningRate=0, dimensions=[0,0,0]):
     global NN
     NN = []
     if run_AI:
@@ -233,11 +251,11 @@ def start(generation_size=2, run_AI=False, ai=''):
         global scores
         if ai=='nn':
             scores = np.empty(1)
-            NN.append(NeuralNetwork(dimensions=[3,10,2], learningRate=1e-2))
+            NN.append(NeuralNetwork(learningRate, dimensions))
         elif ai=='genetic':
             scores = np.empty(generation_size)
             for _ in range(generation_size):
-                NN.append(NeuralNetwork(dimensions=[3,12,2]))
+                NN.append(NeuralNetwork(dimensions))
     else:
         NN.append(0)
     menu(ai, generation_size, 0, run_AI, 0)
