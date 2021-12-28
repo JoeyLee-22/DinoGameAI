@@ -13,8 +13,15 @@ SCREEN_HEIGHT = 525
 SCREEN_WIDTH = 1200
 SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 Y_POS = SCREEN_HEIGHT-200
+first_run = True
 
-max_score = 0
+if (os.path.exists("high_score.txt") and not os.stat("high_score.txt").st_size == 0):
+    myfile = open("high_score.txt", "r")
+    max_score = int(myfile.readline())
+    print(max_score)
+    myfile.close()
+else:
+    max_score = 0
 start_speed = 20
 kb = Controller()
 
@@ -42,7 +49,7 @@ BIRD = [pygame.image.load(os.path.join("Assets/Bird", "Bird1.png")),
 BG = pygame.image.load(os.path.join("Assets/Other", "Track.png"))
 
 def main(ai, generation_size, run_AI, generation):
-    global game_speed, x_pos_bg, y_pos_bg, points, obstacles
+    global game_speed, x_pos_bg, y_pos_bg, points, obstacles, first_run
     run = True
     clock = pygame.time.Clock()
     
@@ -53,8 +60,9 @@ def main(ai, generation_size, run_AI, generation):
     else:
         players.append(Dinosaur(Y_POS, DUCKING, RUNNING, JUMPING))
     
-    if max_score==0:
+    if first_run:
         game_speed = start_speed
+        first_run = False
     
     x_pos_bg = 0
     y_pos_bg = Y_POS+70
@@ -74,7 +82,10 @@ def main(ai, generation_size, run_AI, generation):
         SCREEN.blit(text, textRect)
         if int(points) > max_score:
             max_score = int(points)
-        
+            file = open("high_score.txt", "w")
+            file.write(str(max_score) + "\n" + str(game_speed))
+            file.close()
+                    
         text = font.render("HI   " + str(max_score).zfill(5), True, (0, 0, 0))
         textRect = text.get_rect()
         textRect.center = (SCREEN_WIDTH-225, 35)
@@ -176,7 +187,7 @@ def main(ai, generation_size, run_AI, generation):
             if run_AI:
                 num = random.randint(0,1)
             else:
-                num = random.randint(0,2)
+                num = random.randint(0,1)
                 
             if num == 0:
                 obstacles.append(SmallCactus(SMALL_CACTUS, SCREEN_WIDTH, Y_POS, game_speed, obstacles))
