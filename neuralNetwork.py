@@ -4,7 +4,7 @@ import numpy as np
 
 class NeuralNetwork():
 
-    def __init__(self, dimensions=[0,0,0], learningRate=0): 
+    def __init__(self, learningRate=0, dimensions=[0,0,0]): 
         self.dimensions = dimensions
         self.learningRate = learningRate
 
@@ -106,4 +106,6 @@ class NeuralNetwork():
 
     def predict(self, inputs):
         self.forwardProp(inputs)
+        # if self.outputNeurons[0] > self.outputNeurons[1]:
+        #     print("jump")
         return np.argmax(self.outputNeurons)
