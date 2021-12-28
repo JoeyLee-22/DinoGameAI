@@ -80,6 +80,9 @@ class Dinosaur:
     def getY(self):
         return self.dino_rect.y
     
+    def getV(self):
+        return self.jump_vel
+    
     def changeScore(self, num):
         self.score = num
     
