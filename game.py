@@ -18,7 +18,6 @@ first_run = True
 if (os.path.exists("high_score.txt") and not os.stat("high_score.txt").st_size == 0):
     myfile = open("high_score.txt", "r")
     max_score = int(myfile.readline())
-    print(max_score)
     myfile.close()
 else:
     max_score = 0
