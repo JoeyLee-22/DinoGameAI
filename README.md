@@ -5,7 +5,7 @@ ai is implemented with a neural network
 
 Automatically set to run with ai
 
-To run normal game: add argument to start in main.py: `run_AI=False`
+To run normal game: add argument to `start()` in main.py: `run_AI=False`
 
 - - -
 
