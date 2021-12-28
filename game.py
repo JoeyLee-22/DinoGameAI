@@ -47,6 +47,7 @@ BIRD = [pygame.image.load(os.path.join("Assets/Bird", "Bird1.png")),
 
 BG = pygame.image.load(os.path.join("Assets/Other", "Track.png"))
 
+# functions for showing score and speed, background, data, getting input, checking for collisions, and getting obstacles
 def main(ai, generation_size, run_AI, generation):
     global game_speed, x_pos_bg, y_pos_bg, points, obstacles, first_run
     run = True
@@ -117,6 +118,7 @@ def main(ai, generation_size, run_AI, generation):
             textRect.center = (600, SCREEN_HEIGHT-30)
             SCREEN.blit(text, textRect)
     
+    # also adds to training set when dino jumps successfully
     def getInput():
         global state, prev
         for player, nn in zip(players, NN):
@@ -144,6 +146,7 @@ def main(ai, generation_size, run_AI, generation):
             player.draw(SCREEN)
             player.update(userInput)
     
+    # also adds to training set when dino dies
     def checkCollision():
         global game_speed
         for obstacle in obstacles:
@@ -155,20 +158,22 @@ def main(ai, generation_size, run_AI, generation):
                         v = round(player.getV(),3)
     
                         if not NN[0].check_state(prev_run_state, training_inputs):
+                            
+                            # die while going up: jump earlier
                             if player.getV()<7.25 and player.getV()>0:
                                 training_inputs.append(prev_run_state)
                                 training_outputs.append(np.array([1,0]))
+                                
+                            # die while going down: jump later
                             elif player.getV()<0:
                                 training_inputs.append(state)
                                 training_outputs.append(np.array([0,1]))
+                            
+                            # die while running: jump earlier
                             else:
                                 training_inputs.append(prev_run_state)
                                 training_outputs.append(np.array([1,0]))
-                                                    
-                        #die while going up: jump earlier
-                        #die while going down: jump later
-                        #die while running: jump earlier
-                        
+                                                                            
                         NN[0].train(training_inputs, training_outputs, epochs=1500)
                         game_speed = start_speed
                         scores[i] = player.getScore()
@@ -180,6 +185,7 @@ def main(ai, generation_size, run_AI, generation):
                         pygame.time.delay(100)
                         menu(ai, generation_size, generation+1, run_AI, 1)
     
+    # also updates previous states
     def getObstacle():
         global prev_jump_state, prev_run_state
         if len(obstacles) == 0:
@@ -200,6 +206,7 @@ def main(ai, generation_size, run_AI, generation):
             else:
                 prev_run_state = prev
     
+    # calls all the functions to make the game work
     while run:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -217,6 +224,7 @@ def main(ai, generation_size, run_AI, generation):
         clock.tick(40)
         pygame.display.update()
 
+# main menu before game starts
 def menu(ai, generation_size, generation, run_AI, death_count):
     global points
     run = True
