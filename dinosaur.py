@@ -25,6 +25,7 @@ class Dinosaur:
         self.RUNNING = RUNNING
         self.JUMPING = JUMPING
 
+    # updates what the dino is doing
     def update(self, userInput):
         if self.dino_duck:
             self.duck()
@@ -48,7 +49,7 @@ class Dinosaur:
             self.dino_duck = True
             self.dino_run = False
             self.dino_jump = False
-            
+
         self.score += 0.25
 
     def duck(self):
