@@ -1,19 +1,18 @@
 # Dino Game AI
 dino game implemented with pygame
 
-Two ways the ai is implemented: neural network and genetic algorithm
+ai is implemented with a neural network
 
-Automatically set to only run game
+Automatically set to run with ai
 
-To run neural network ai: change argument of start in main.py to `run_AI=True, ai='nn'`
+To run normal game: add argument to start in main.py: `run_AI=False`
 
-To run genetic algorithm ai: change argument of start in main.py to `run_AI=True, ai='genetic'`
 - - -
 
 # Neural Network
 
 
-multi layer perceptron that takes the distance and the height of the cactus along with the game speed to predict whether to run or jump
+multi layer perceptron that takes the distance to the next cactus along with the game speed to predict whether to run or jump
 
 - - -
 
