@@ -254,7 +254,7 @@ def menu(ai, generation_size, generation, run_AI, death_count):
                 if event.type == pygame.KEYDOWN:
                     main(ai, generation_size, run_AI, generation)
 
-def start(generation_size=2, run_AI=False, ai='', learningRate=0, dimensions=[0,0,0]):
+def start(generation_size=2, run_AI=False, ai='nn', learningRate=1e-1, dimensions=[2,4,2]):
     global NN
     NN = []
     if run_AI:
