@@ -1,4 +1,5 @@
 __init__.py
+high_score.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
