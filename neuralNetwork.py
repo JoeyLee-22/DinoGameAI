@@ -30,6 +30,7 @@ class NeuralNetwork():
     def getHeight(self, y_pos_bg, obstacles):
         return int((y_pos_bg-obstacles[0].getY())/100>0.7)
     
+    # see if training example is already in the training set
     def check_state(self, state, training_inputs):
         for input in training_inputs:
             if np.array_equal(state, input):
